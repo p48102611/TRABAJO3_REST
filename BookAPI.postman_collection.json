@@ -1,0 +1,18 @@
+{
+	"info": {
+		"_postman_id": "ccf4bca6-4b17-4e72-acc0-39c8bcea88bf",
+		"name": "BookAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GetBooks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": null
+			},
+			"response": []
+		}
+	]
+}
