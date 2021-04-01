@@ -9,9 +9,11 @@ namespace TRABAJO3_REST.Services
     public interface IBooksService
     {
         public IEnumerable<BookModel> GetBooks(string orderBy = "Id");
-        public BookModel GetBook(long  bookId);
+        public IEnumerable<BookModel> SearchBooksBy(string by, string nameBy);
+        public BookModel GetBook(long? bookId);
         public BookModel CreateBook(BookModel newBook);
-        public bool DeleteTeam(long bookId);
+        public bool DeleteBook(long? bookId);
+        public void DeleteBooksBy(string field, string nameField);
         public BookModel UpdateBook(long bookId, BookModel updateBook);
 
 

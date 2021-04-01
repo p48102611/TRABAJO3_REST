@@ -18,13 +18,25 @@ namespace TRABAJO3_REST.Controllers
         {
             _booksService = booksService;
         }
+
         [HttpGet]
-        public ActionResult<IEnumerable<BookModel>> GetBooks(string orderBy = "Id")
+        public ActionResult<IEnumerable<BookModel>> GetBooks(string by = "", string nameBy = "", string orderBy = "")
         {
             try
             {
-                var books = _booksService.GetBooks(orderBy);
-                return Ok(books);
+                if (orderBy == "" && nameBy == "" && by == "")
+                    return Ok(_booksService.GetBooks("Id"));
+                if (orderBy == "")
+                {
+                    var books = _booksService.SearchBooksBy(by, nameBy);
+                    return Ok(books);
+                }
+                else
+                    return Ok(_booksService.GetBooks(orderBy));
+            }
+            catch (NotFoundItemException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (InvalidOperationItemException ex)
             {
@@ -35,7 +47,28 @@ namespace TRABAJO3_REST.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Something unexpected happened.");
             }
         }
-        //api/teams/2
+        [HttpGet("search")]
+        public ActionResult<IEnumerable<BookModel>> SearchBooksBy(string by = "", string nameBy = "")
+        {
+            try
+            {
+                var books = _booksService.SearchBooksBy(by, nameBy);
+                return Ok(books);
+            }
+            catch (NotFoundItemException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (InvalidOperationItemException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Something unexpected happened.");
+            }
+        }
+
         [HttpGet("{bookId:long}")]
         //public ActionResult<TeamModel> GetTeam(long teamId, string algo) // si tiene un parametro mas asume que es un query param
         public ActionResult<BookModel> GetBook(long bookId)
@@ -66,25 +99,36 @@ namespace TRABAJO3_REST.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 var book = _booksService.CreateBook(newBook);
-                return Created($"api/teams/{book.Id}", newBook);
+                return Created($"api/books/{book.Id}", newBook);
             }
             catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Something unexpected happened.");
             }
         }
-
+        [HttpDelete]
         [HttpDelete("{bookId:long}")]
-        public ActionResult<bool> DeleteBook(long bookId)
+        public ActionResult<bool> DeleteBook(long? bookId, string by, string nameBy)
         {
             try
             {
-                var result = _booksService.DeleteTeam(bookId);
-                return Ok(result);
+                if(bookId != null)
+                {
+                    var result = _booksService.DeleteBook(bookId);
+                    return Ok(result);
+                }
+                else
+                {
+                    _booksService.DeleteBooksBy(by, nameBy);
+                    return Ok();
+                }
+            }
+            catch (InvalidOperationItemException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch (NotFoundItemException ex)
             {
-                //pasamos el mensaje de la excepcion creada
                 return NotFound(ex.Message);
             }
             catch (Exception)
@@ -93,17 +137,47 @@ namespace TRABAJO3_REST.Controllers
             }
         }
 
-        [HttpPut("{teamId:long}")]
-        public ActionResult<BookModel> UpdateTeam(long bookId, [FromBody] BookModel bookTeam)
+        [HttpDelete("delete")]
+        public ActionResult<bool> DeleteBooksBy(string by, string nameBy)
         {
             try
             {
-                var book = _booksService.UpdateBook(bookId, bookTeam);
+                _booksService.DeleteBooksBy(by, nameBy);
+                return Ok();
+            }
+            catch (InvalidOperationItemException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (NotFoundItemException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Something unexpected happened.");
+            }
+        }
+
+        [HttpPut("{bookId:long}")]
+        public ActionResult<BookModel> UpdateTeam(long bookId, [FromBody] BookModel bookModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                var natinallity = ModelState[nameof(bookModel.CountLike)];
+
+                if (natinallity != null && natinallity.Errors.Any())
+                {
+                    return BadRequest(natinallity.Errors);
+                }
+            }
+            try
+            {
+                var book = _booksService.UpdateBook(bookId, bookModel);
                 return Ok(book);
             }
             catch (NotFoundItemException ex)
             {
-                //pasamos el mensaje de la excepcion creada
                 return NotFound(ex.Message);
             }
             catch (Exception)
